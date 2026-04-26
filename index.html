@@ -27,6 +27,8 @@
       --green-glow:  rgba(22,163,74,0.18);
       --amber:       #d97706;
       --amber-light: #f59e0b;
+      --amber-dim:   #fef3c7;
+      --amber-glow:  rgba(217,119,6,0.18);
       --purple:      #7c3aed;
       --purple-dim:  #ede9fe;
       --purple-glow: rgba(124,58,237,0.18);
@@ -94,8 +96,9 @@
       cursor: pointer; transition: all 0.15s;
     }
     .mode-tab:hover { color: var(--text); background: var(--bg3); }
-    .mode-tab.active-compose { background: var(--green); color: #fff; box-shadow: 0 2px 8px var(--green-glow); }
-    .mode-tab.active-live    { background: var(--purple); color: #fff; box-shadow: 0 2px 8px var(--purple-glow); }
+    .mode-tab.active-compose    { background: var(--green);  color: #fff; box-shadow: 0 2px 8px var(--green-glow);  }
+    .mode-tab.active-live       { background: var(--purple); color: #fff; box-shadow: 0 2px 8px var(--purple-glow); }
+    .mode-tab.active-preloaded  { background: var(--amber);  color: #fff; box-shadow: 0 2px 8px var(--amber-glow);  }
     .mode-tab svg { width: 16px; height: 16px; flex-shrink: 0; }
 
     /* ── Panels ── */
@@ -338,6 +341,26 @@
     .live-btn.rec-active { background: var(--red-dim); border-color: var(--red); color: var(--red); }
     .live-btn.send-active { background: var(--green-dim); border-color: var(--green); color: var(--green); }
 
+    /* ── Preloaded: song list ── */
+    .song-list { display: flex; flex-direction: column; gap: 6px; }
+    .song-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 14px; border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm); cursor: pointer;
+      background: var(--bg2); transition: all 0.12s; user-select: none;
+    }
+    .song-row:hover { border-color: var(--amber-light); background: var(--amber-dim); }
+    .song-row.selected { border-color: var(--amber); background: var(--amber-dim); box-shadow: 0 0 10px var(--amber-glow); }
+    .song-num {
+      font-family: var(--mono); font-size: 11px; font-weight: 700;
+      color: var(--text-3); min-width: 18px; flex-shrink: 0;
+    }
+    .song-row.selected .song-num { color: var(--amber); }
+    .song-info { flex: 1; min-width: 0; }
+    .song-title { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.3; }
+    .song-row.selected .song-title { color: var(--amber); }
+    .song-meta { font-size: 11px; color: var(--text-3); font-family: var(--mono); margin-top: 2px; }
+
     /* ── Footer ── */
     .page-footer {
       margin-top: auto; padding: 1.25rem 2rem;
@@ -382,6 +405,13 @@
             stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round"/>
         </svg>
         Live Play
+      </button>
+      <button class="mode-tab" id="tabPreloaded" onclick="switchMode('preloaded')">
+        <svg viewBox="0 0 16 16" fill="currentColor">
+          <path d="M6 2a1 1 0 00-1 1v10a1 1 0 001.5.87l7-5a1 1 0 000-1.74l-7-5A1 1 0 006 2z"/>
+          <rect x="1" y="2" width="2.5" height="12" rx="1"/>
+        </svg>
+        Preloaded
       </button>
     </div>
 
@@ -503,6 +533,57 @@
 
     </div>
 
+    <!-- ══════════════ PRELOADED PANEL ══════════════ -->
+    <div class="panel" id="panelPreloaded">
+
+      <!-- Note mapping display -->
+      <div class="card">
+        <div class="label">note mapping &nbsp;0 – 9</div>
+        <div class="note-grid" id="noteGridPreloaded"></div>
+      </div>
+
+      <!-- Song list -->
+      <div class="card">
+        <div class="label">choose a song</div>
+        <div class="song-list" id="songList"></div>
+      </div>
+
+      <!-- Instrument + controls -->
+      <div class="card">
+        <div class="label">instrument</div>
+        <div class="instruments-grid" id="instGridPreloaded"></div>
+
+        <div class="divider" style="margin: 1.25rem 0;"></div>
+
+        <div class="controls-row">
+          <button class="play-btn" id="preloadedPlayBtn" onclick="togglePreloadedPlay()">
+            <svg class="icon" id="preloadedPlayIcon" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M3 2.5l10 5.5-10 5.5V2.5z"/>
+            </svg>
+            <span id="preloadedPlayLabel">Play</span>
+          </button>
+          <div class="tempo-group">
+            <label>Tempo</label>
+            <input type="range" min="40" max="400" step="5" value="135" id="preloadedTempoSlider" oninput="updatePreloadedTempo(this.value)" />
+            <span class="tempo-val" id="preloadedTempoVal">135</span>
+            <span class="tempo-unit">bpm</span>
+          </div>
+        </div>
+
+        <div id="preloadedPlaybackDisplay" class="playback-display"></div>
+
+        <div style="margin-top: 1rem;">
+          <button class="live-btn" onclick="loadIntoCompose()">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="2" y1="8" x2="12" y2="8"/><polyline points="9 5 12 8 9 11"/>
+            </svg>
+            Load in Compose
+          </button>
+        </div>
+      </div>
+
+    </div>
+
   </main>
 
   <footer class="page-footer">
@@ -535,6 +616,59 @@
       { id:'pluck',   icon:'🪕', name:'Pluck',   desc:'guitar-like'         },
     ];
 
+    const SONGS = [
+      {
+        title: 'Twinkle Twinkle Little Star',
+        bpm: '120–150 bpm', instruments: 'flute · sine · marimba',
+        sequence: '0·0·4·4·5·5·4··3·3·2·2·1·1·0··4·4·3·3·2·2·1··4·4·3·3·2·2·1··0·0·4·4·5·5·4··3·3·2·2·1·1·0'
+      },
+      {
+        title: 'Ode to Joy — Beethoven',
+        bpm: '100–140 bpm', instruments: 'organ · piano · bell',
+        sequence: '2·2·3·4·4·3·2·1·0·0·1·2·2·1·1··2·2·3·4·4·3·2·1·0·0·1·2·1·0·0'
+      },
+      {
+        title: 'Happy Birthday',
+        bpm: '160–200 bpm', instruments: 'piano · marimba',
+        sequence: '0·0·1·0·3·2··0·0·1·0·4·3··0·0·7·5·3·2·1··6·5·3·4·3'
+      },
+      {
+        title: 'Mary Had a Little Lamb',
+        bpm: '140–180 bpm', instruments: 'flute · marimba · pluck',
+        sequence: '2·1·0·1·2·2·2··1·1·1··2·4·4··2·1·0·1·2·2·2·2··1·1·2·1·0'
+      },
+      {
+        title: 'Jingle Bells — chorus × 2',
+        bpm: '200–260 bpm', instruments: 'piano · synth',
+        sequence: '2·2·2··2·2·2··2·4·0·1·2··3·3·3·3·3·2·2·2··2·1·1·2·1·4··2·2·2··2·2·2··2·4·0·1·2··3·3·3·3·3·2·2·2··4·4·3·1·0'
+      },
+      {
+        title: 'Frère Jacques',
+        bpm: '120–160 bpm', instruments: 'flute · bell · organ',
+        sequence: '0·1·2·0··0·1·2·0··2·3·4··2·3·4··4·5·4·3·2·0··4·5·4·3·2·0··0·4·0··0·4·0'
+      },
+      {
+        title: 'London Bridge is Falling Down',
+        bpm: '160–200 bpm', instruments: 'piano · pluck',
+        sequence: '4·5·4·3·2·3·4··1·2·3·2·3·4··4·5·4·3·2·3·4·1·4'
+      },
+      {
+        title: 'Row Row Row Your Boat',
+        bpm: '140–170 bpm', instruments: 'marimba · pluck · flute',
+        sequence: '0·0·0·1·2··2·1·2·3·4··7·7·7·4·4·4·2·2·2·0·0·0··4·3·2·1·0'
+      },
+      {
+        title: 'When the Saints Go Marching In',
+        bpm: '180–240 bpm', instruments: 'organ · synth · piano',
+        sequence: '0·2·3·4··0·2·3·4··0·2·3·4·7·5·4··0·2·4·2·0·5·4·2·0··4·3·2·0·1·0'
+      },
+      {
+        title: "Pachelbel's Canon — simplified",
+        bpm: '90–130 bpm', instruments: 'bell · organ · flute',
+        sequence: '2·1·0·6·5·6·0·1··2·3·2·1·0·1·2·0··5·6·0·6·5·4·5·6··0·1·2·3·4·3·2·1'
+      },
+    ];
+
     /* ─── State ─── */
     let audioCtx          = null;
     let playing           = false;
@@ -546,6 +680,10 @@
     let recordedTokens    = [];
     let lastPlayMs        = 0;
     let heldKeys          = new Set();
+    let selectedSongIdx   = 0;
+    let preloadedPlaying  = false;
+    let preloadedStopFlag = false;
+    let preloadedBpm      = 135;
 
     /* ─── Audio context ─── */
     function getCtx() {
@@ -658,13 +796,17 @@
     }
 
     /* ─── Build grids ─── */
-    const noteGrid = document.getElementById('noteGrid');
-    NOTES.forEach((n, i) => {
-      const el = document.createElement('div');
-      el.className = 'note-key'; el.id = 'key-' + i;
-      el.innerHTML = `<span class="digit">${i}</span><span class="note-name">${n.name}<span class="octave">${n.octave}</span></span><div class="beat-indicator"></div>`;
-      noteGrid.appendChild(el);
-    });
+    function buildNoteGrid(gridId) {
+      const grid = document.getElementById(gridId);
+      NOTES.forEach((n, i) => {
+        const el = document.createElement('div');
+        el.className = 'note-key'; el.id = gridId + '-' + i;
+        el.innerHTML = '<span class="digit">' + i + '</span><span class="note-name">' + n.name + '<span class="octave">' + n.octave + '</span></span><div class="beat-indicator"></div>';
+        grid.appendChild(el);
+      });
+    }
+    buildNoteGrid('noteGrid');
+    buildNoteGrid('noteGridPreloaded');
 
     const pianoGrid = document.getElementById('pianoGrid');
     NOTES.forEach((n, i) => {
@@ -685,7 +827,7 @@
         btn.innerHTML = `<span class="inst-icon">${inst.icon}</span><span class="inst-name">${inst.name}</span><span class="inst-desc">${inst.desc}</span>`;
         btn.addEventListener('click', () => {
           currentInstrument = inst.id;
-          ['instGridCompose','instGridLive'].forEach(gid => {
+          ['instGridCompose','instGridLive','instGridPreloaded'].forEach(gid => {
             document.querySelectorAll('#' + gid + ' .inst-btn').forEach(b => b.classList.remove('selected'));
             const match = document.getElementById(gid + '-' + inst.id);
             if (match) match.classList.add('selected');
@@ -696,15 +838,49 @@
     }
     buildInstGrid('instGridCompose');
     buildInstGrid('instGridLive');
+    buildInstGrid('instGridPreloaded');
+
+    /* ─── Song list ─── */
+    function buildSongList() {
+      const list = document.getElementById('songList');
+      SONGS.forEach((song, i) => {
+        const row = document.createElement('div');
+        row.className = 'song-row' + (i === 0 ? ' selected' : '');
+        row.onclick = () => selectSong(i);
+        row.innerHTML = '<span class="song-num">' + (i + 1) + '</span><div class="song-info"><div class="song-title">' + song.title + '</div><div class="song-meta">' + song.bpm + ' &nbsp;·&nbsp; ' + song.instruments + '</div></div>';
+        list.appendChild(row);
+      });
+    }
+    buildSongList();
+
+    function selectSong(idx) {
+      selectedSongIdx = idx;
+      document.querySelectorAll('.song-row').forEach((r, i) => r.classList.toggle('selected', i === idx));
+      const bpmMatch = SONGS[idx].bpm.match(/(\d+)[–-](\d+)/);
+      if (bpmMatch) {
+        const mid = Math.round((parseInt(bpmMatch[1]) + parseInt(bpmMatch[2])) / 2 / 5) * 5;
+        preloadedBpm = mid;
+        document.getElementById('preloadedTempoSlider').value = mid;
+        document.getElementById('preloadedTempoVal').textContent = mid;
+      }
+      if (preloadedPlaying) preloadedStopFlag = true;
+    }
+
+    function dotToSequence(s) {
+      return s.replace(/··/g, ' ').replace(/·/g, '');
+    }
 
     /* ─── Mode switching ─── */
     function switchMode(mode) {
       currentMode = mode;
-      document.getElementById('panelCompose').classList.toggle('visible', mode === 'compose');
-      document.getElementById('panelLive').classList.toggle('visible',    mode === 'live');
-      document.getElementById('tabCompose').className = 'mode-tab' + (mode === 'compose' ? ' active-compose' : '');
-      document.getElementById('tabLive').className    = 'mode-tab' + (mode === 'live'    ? ' active-live'    : '');
+      document.getElementById('panelCompose').classList.toggle('visible',    mode === 'compose');
+      document.getElementById('panelLive').classList.toggle('visible',       mode === 'live');
+      document.getElementById('panelPreloaded').classList.toggle('visible',  mode === 'preloaded');
+      document.getElementById('tabCompose').className   = 'mode-tab' + (mode === 'compose'    ? ' active-compose'    : '');
+      document.getElementById('tabLive').className      = 'mode-tab' + (mode === 'live'       ? ' active-live'       : '');
+      document.getElementById('tabPreloaded').className = 'mode-tab' + (mode === 'preloaded'  ? ' active-preloaded'  : '');
       if (playing) stopFlag = true;
+      if (preloadedPlaying) preloadedStopFlag = true;
     }
 
     /* ─── Compose functions ─── */
@@ -712,11 +888,11 @@
     function loadPreset(s)  { document.getElementById('seqInput').value = s; }
 
     function setActiveKey(i) {
-      document.querySelectorAll('.note-key').forEach(k => k.classList.remove('active'));
-      if (i >= 0) document.getElementById('key-' + i)?.classList.add('active');
+      document.querySelectorAll('#noteGrid .note-key').forEach(k => k.classList.remove('active'));
+      if (i >= 0) document.getElementById('noteGrid-' + i)?.classList.add('active');
     }
     function flashRest() {
-      document.querySelectorAll('.note-key').forEach(k => {
+      document.querySelectorAll('#noteGrid .note-key').forEach(k => {
         k.classList.add('rest-flash');
         setTimeout(() => k.classList.remove('rest-flash'), 90);
       });
@@ -737,8 +913,8 @@
       return tokens;
     }
 
-    function buildDisplay(raw) {
-      const el = document.getElementById('playbackDisplay');
+    function buildDisplay(raw, elId) {
+      const el = document.getElementById(elId);
       el.style.display = 'block'; el.innerHTML = '';
       const spans = [];
       for (let i = 0; i < raw.length; i++) {
@@ -765,7 +941,7 @@
       lbl.textContent = 'Stop';
 
       const beatMs = (60/bpm)*1000, noteDur = (beatMs/1000)*0.88;
-      const spans  = buildDisplay(raw);
+      const spans  = buildDisplay(raw, 'playbackDisplay');
 
       for (const tok of tokens) {
         if (stopFlag) break;
@@ -785,6 +961,62 @@
       btn.classList.remove('playing');
       icon.innerHTML = '<path d="M3 2.5l10 5.5-10 5.5V2.5z"/>';
       lbl.textContent = 'Play';
+    }
+
+    /* ─── Preloaded functions ─── */
+    function updatePreloadedTempo(v) {
+      preloadedBpm = parseInt(v, 10);
+      document.getElementById('preloadedTempoVal').textContent = v;
+    }
+
+    function setActiveKeyPreloaded(i) {
+      document.querySelectorAll('#noteGridPreloaded .note-key').forEach(k => k.classList.remove('active'));
+      if (i >= 0) document.getElementById('noteGridPreloaded-' + i)?.classList.add('active');
+    }
+
+    async function togglePreloadedPlay() {
+      if (preloadedPlaying) { preloadedStopFlag = true; return; }
+      const song = SONGS[selectedSongIdx];
+      const raw = dotToSequence(song.sequence);
+      const tokens = parseSequence(raw);
+      if (!tokens.some(t => t.type === 'note')) return;
+
+      preloadedPlaying = true; preloadedStopFlag = false;
+      const btn  = document.getElementById('preloadedPlayBtn');
+      const icon = document.getElementById('preloadedPlayIcon');
+      const lbl  = document.getElementById('preloadedPlayLabel');
+      btn.classList.add('playing');
+      icon.innerHTML = '<rect x="3" y="2" width="4" height="12" rx="1"/><rect x="9" y="2" width="4" height="12" rx="1"/>';
+      lbl.textContent = 'Stop';
+
+      const beatMs  = (60 / preloadedBpm) * 1000;
+      const noteDur = (beatMs / 1000) * 0.88;
+      const spans   = buildDisplay(raw, 'preloadedPlaybackDisplay');
+
+      for (const tok of tokens) {
+        if (preloadedStopFlag) break;
+        spans.forEach((s, si) => {
+          if (si < tok.rawIdx)        { s.classList.add('done'); s.classList.remove('current-note','current-rest'); }
+          else if (si === tok.rawIdx) { s.classList.remove('done'); s.classList.add(tok.type==='note'?'current-note':'current-rest'); s.classList.remove(tok.type==='note'?'current-rest':'current-note'); }
+          else                         { s.classList.remove('current-note','current-rest','done'); }
+        });
+        if (tok.type === 'note') { setActiveKeyPreloaded(tok.digit); playNote(NOTES[tok.digit].freq, noteDur, currentInstrument); }
+        else                     { setActiveKeyPreloaded(-1); }
+        await sleep(beatMs);
+      }
+
+      spans.forEach(s => { s.classList.remove('current-note','current-rest'); s.classList.add('done'); });
+      setActiveKeyPreloaded(-1);
+      preloadedPlaying = false; preloadedStopFlag = false;
+      btn.classList.remove('playing');
+      icon.innerHTML = '<path d="M3 2.5l10 5.5-10 5.5V2.5z"/>';
+      lbl.textContent = 'Play';
+    }
+
+    function loadIntoCompose() {
+      const seq = dotToSequence(SONGS[selectedSongIdx].sequence);
+      document.getElementById('seqInput').value = seq;
+      switchMode('compose');
     }
 
     /* ─── Live play functions ─── */
