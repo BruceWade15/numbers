@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Singing Numbers</title>
-   <meta name="description" content="A application by M37. www.m37.com" />
+   <meta name="description" content="Singing Numbers. An app by M37. www.m37.co.za" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
   <style>
@@ -304,6 +304,27 @@
     .piano-key.pressed .pk-note { color: var(--purple); }
     .piano-key .pk-octave { font-size: 8px; vertical-align: super; }
 
+    /* ── Sustain pedal ── */
+    .sustain-pedal {
+      width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
+      padding: 14px 18px; margin-bottom: 1.25rem;
+      border: 1.5px dashed var(--border-hi); border-radius: var(--radius);
+      background: var(--bg2); color: var(--text-2);
+      font-size: 13px; font-weight: 600; font-family: var(--font);
+      cursor: pointer; user-select: none; touch-action: none;
+      transition: background 0.1s, border-color 0.1s, color 0.1s, box-shadow 0.1s;
+    }
+    .sustain-pedal .k {
+      font-family: var(--mono); font-size: 11px; font-weight: 700;
+      background: var(--bg3); border: 1.5px solid var(--border-mid);
+      border-radius: 5px; padding: 2px 10px; color: var(--text);
+    }
+    .sustain-pedal.on {
+      background: var(--purple-dim); border-style: solid; border-color: var(--purple);
+      color: var(--purple); box-shadow: 0 0 14px var(--purple-glow);
+    }
+    .sustain-pedal.on .k { background: var(--purple); border-color: var(--purple); color: #fff; }
+
     /* ── Live status ── */
     .live-status {
       display: flex; align-items: center; gap: 12px;
@@ -380,11 +401,14 @@
       .piano-key { min-height: 86px; }
       .piano-key .kb-hint { width: 24px; height: 24px; font-size: 11px; }
       .inst-desc { display: none; }
-      .mode-tab { padding: 9px 16px; font-size: 13px; }
+      .mode-tabs { width: 100%; }
+      .mode-tab { flex: 1; justify-content: center; padding: 9px 8px; font-size: 13px; gap: 6px; white-space: nowrap; }
+      .piano-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+      .sustain-pedal .k { display: none; }
     }
     @media (max-width: 420px) {
       .piano-key { min-height: 72px; }
-      .piano-key .pk-note { display: none; }
+      .mode-tab svg { display: none; }
       .instruments-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     }
   </style>
@@ -395,7 +419,7 @@
   <header class="banner">
     <h1>🎵 Singing Numbers</h1>
     <p>Turn any number sequence into music</p>
-    <p class="banner-credit">App by M37 &nbsp;·&nbsp; www.m37.com</p>
+    <p class="banner-credit">App by M37 &nbsp;·&nbsp; www.m37.co.za</p>
   </header>
 
   <main class="app-container">
@@ -497,6 +521,7 @@
         <div class="kb-guide-title">Keyboard shortcuts</div>
         <div class="kb-guide-row">
           <span class="kb-chip"><span class="k">0</span>–<span class="k">9</span>&nbsp; play notes</span>
+          <span class="kb-chip"><span class="k">Space</span>&nbsp; hold to sustain</span>
           <span class="kb-chip"><span class="k">R</span>&nbsp; toggle record</span>
           <span class="kb-chip"><span class="k">C</span>&nbsp; clear</span>
           <span class="kb-chip"><span class="k">↵</span>&nbsp; send to compose</span>
@@ -506,6 +531,11 @@
       <div class="card">
         <div class="label">tap or press 0 – 9</div>
         <div class="piano-grid" id="pianoGrid"></div>
+
+        <button class="sustain-pedal" id="sustainPedal" type="button">
+          <span class="k">Space</span>
+          <span id="sustainLabel">Sustain pedal: hold here or hold Space and notes ring on</span>
+        </button>
 
         <div class="live-status">
           <div class="live-dot" id="liveDot"></div>
@@ -595,7 +625,7 @@
   </main>
 
   <footer class="page-footer">
-    Singing Numbers &nbsp;·&nbsp; Web Audio API &nbsp;·&nbsp; no dependencies
+    Singing Numbers &nbsp;·&nbsp; Web Audio API &nbsp;·&nbsp; App by M37
   </footer>
 
   <script>
@@ -617,7 +647,7 @@
       { id:'piano',   icon:'🎹', name:'Piano',   desc:'bright & percussive' },
       { id:'flute',   icon:'🎵', name:'Flute',   desc:'soft & breathy'      },
       { id:'bell',    icon:'🔔', name:'Bell',    desc:'bright & ringing'    },
-      { id:'organ',   icon:'🎸', name:'Organ',   desc:'full & sustained'    },
+      { id:'organ',   icon:'🎼', name:'Organ',   desc:'full & sustained'    },
       { id:'marimba', icon:'🪘', name:'Marimba', desc:'woody & warm'        },
       { id:'synth',   icon:'🎛️', name:'Synth',   desc:'electronic lead'     },
       { id:'bass',    icon:'🔉', name:'Bass',    desc:'deep & resonant'     },
@@ -658,7 +688,7 @@
       {
         title: 'London Bridge is Falling Down',
         bpm: '160–200 bpm', instruments: 'piano · pluck',
-        sequence: '4·5·4·3·2·3·4··1·2·3·2·3·4··4·5·4·3·2·3·4·1·4'
+        sequence: '4·5·4·3·2·3·4··1·2·3··2·3·4··4·5·4·3·2·3·4··1·4·2·0'
       },
       {
         title: 'Row Row Row Your Boat',
@@ -692,6 +722,9 @@
     let preloadedPlaying  = false;
     let preloadedStopFlag = false;
     let preloadedBpm      = 135;
+    let sustainOn         = false;
+    let sustainedVoices   = [];
+    const SUSTAIN_MAX_S   = 12;
 
     /* ─── Audio context ─── */
     function getCtx() {
@@ -701,11 +734,13 @@
     }
 
     /* ─── Synthesisers ─── */
+    // Every voice goes through its own output gain, returned so a sustained note can be faded out
     function playNote(freq, duration, instrument) {
       const ctx = getCtx(), now = ctx.currentTime;
+      const out = ctx.createGain(); out.connect(ctx.destination);
       switch (instrument) {
         case 'piano': {
-          const g = ctx.createGain(); g.connect(ctx.destination);
+          const g = ctx.createGain(); g.connect(out);
           [1, 2.001].forEach((r, i) => {
             const o = ctx.createOscillator();
             o.type = i ? 'sine' : 'triangle'; o.frequency.value = freq * r;
@@ -721,7 +756,7 @@
           const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain();
           o.type = 'sine'; o.frequency.value = freq;
           f.type = 'lowpass'; f.frequency.value = freq * 4;
-          o.connect(f); f.connect(g); g.connect(ctx.destination);
+          o.connect(f); f.connect(g); g.connect(out);
           g.gain.setValueAtTime(0.001, now);
           g.gain.exponentialRampToValueAtTime(0.3, now + 0.06);
           g.gain.setValueAtTime(0.3, now + duration * 0.7);
@@ -732,14 +767,14 @@
           [[1,0.5],[2.756,0.25],[5.404,0.12],[8.933,0.06]].forEach(([r,v]) => {
             const o = ctx.createOscillator(), g = ctx.createGain();
             o.type = 'sine'; o.frequency.value = freq * r;
-            o.connect(g); g.connect(ctx.destination);
+            o.connect(g); g.connect(out);
             g.gain.setValueAtTime(v, now);
             g.gain.exponentialRampToValueAtTime(0.0001, now + duration * 2.2);
             o.start(now); o.stop(now + duration * 2.5);
           }); break;
         }
         case 'organ': {
-          const m = ctx.createGain(); m.connect(ctx.destination);
+          const m = ctx.createGain(); m.connect(out);
           m.gain.setValueAtTime(0.001, now);
           m.gain.exponentialRampToValueAtTime(0.28, now + 0.01);
           m.gain.setValueAtTime(0.28, now + duration * 0.88);
@@ -751,7 +786,7 @@
           }); break;
         }
         case 'marimba': {
-          const g = ctx.createGain(); g.connect(ctx.destination);
+          const g = ctx.createGain(); g.connect(out);
           g.gain.setValueAtTime(0.001, now);
           g.gain.exponentialRampToValueAtTime(0.4, now + 0.005);
           g.gain.exponentialRampToValueAtTime(0.0001, now + duration * 0.75);
@@ -760,7 +795,7 @@
           const o2 = ctx.createOscillator(), g2 = ctx.createGain();
           o2.type = 'sine'; o2.frequency.value = freq * 3.932;
           g2.gain.setValueAtTime(0.12, now); g2.gain.exponentialRampToValueAtTime(0.0001, now + 0.04);
-          o2.connect(g2); g2.connect(ctx.destination); o2.start(now); o2.stop(now + 0.1); break;
+          o2.connect(g2); g2.connect(out); o2.start(now); o2.stop(now + 0.1); break;
         }
         case 'synth': {
           const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain();
@@ -768,7 +803,7 @@
           f.type = 'lowpass'; f.Q.value = 6;
           f.frequency.setValueAtTime(freq * 8, now);
           f.frequency.exponentialRampToValueAtTime(freq * 1.5, now + duration * 0.6);
-          o.connect(f); f.connect(g); g.connect(ctx.destination);
+          o.connect(f); f.connect(g); g.connect(out);
           g.gain.setValueAtTime(0.001, now);
           g.gain.exponentialRampToValueAtTime(0.28, now + 0.015);
           g.gain.setValueAtTime(0.22, now + duration * 0.7);
@@ -779,7 +814,7 @@
           const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain();
           o.type = 'sine'; o.frequency.value = freq * 0.5;
           f.type = 'lowpass'; f.frequency.value = 400; f.Q.value = 2;
-          o.connect(f); f.connect(g); g.connect(ctx.destination);
+          o.connect(f); f.connect(g); g.connect(out);
           g.gain.setValueAtTime(0.001, now);
           g.gain.exponentialRampToValueAtTime(0.5, now + 0.01);
           g.gain.setValueAtTime(0.4, now + duration * 0.5);
@@ -795,12 +830,13 @@
           for (let i = 0; i < bsz; i++) d[i] = Math.random() * 2 - 1;
           for (let i = bsz; i < len; i++) d[i] = 0.996 * (d[i-bsz] + (i > bsz ? d[i-bsz-1] : 0)) / 2;
           const src = ctx.createBufferSource(), g = ctx.createGain();
-          src.buffer = buf; src.connect(g); g.connect(ctx.destination);
+          src.buffer = buf; src.connect(g); g.connect(out);
           g.gain.setValueAtTime(0.6, now);
           g.gain.exponentialRampToValueAtTime(0.0001, now + duration);
           src.start(now); src.stop(now + duration); break;
         }
       }
+      return out;
     }
 
     /* ─── Build grids ─── */
@@ -889,6 +925,7 @@
       document.getElementById('tabPreloaded').className = 'mode-tab' + (mode === 'preloaded'  ? ' active-preloaded'  : '');
       if (playing) stopFlag = true;
       if (preloadedPlaying) preloadedStopFlag = true;
+      setSustain(false);
     }
 
     /* ─── Compose functions ─── */
@@ -948,11 +985,11 @@
       icon.innerHTML = '<rect x="3" y="2" width="4" height="12" rx="1"/><rect x="9" y="2" width="4" height="12" rx="1"/>';
       lbl.textContent = 'Stop';
 
-      const beatMs = (60/bpm)*1000, noteDur = (beatMs/1000)*0.88;
       const spans  = buildDisplay(raw, 'playbackDisplay');
 
       for (const tok of tokens) {
         if (stopFlag) break;
+        const beatMs = (60/bpm)*1000, noteDur = (beatMs/1000)*0.88;
         spans.forEach((s, si) => {
           if (si < tok.rawIdx)       { s.classList.add('done'); s.classList.remove('current-note','current-rest'); }
           else if (si === tok.rawIdx){ s.classList.remove('done'); s.classList.add(tok.type==='note'?'current-note':'current-rest'); s.classList.remove(tok.type==='note'?'current-rest':'current-note'); }
@@ -997,12 +1034,12 @@
       icon.innerHTML = '<rect x="3" y="2" width="4" height="12" rx="1"/><rect x="9" y="2" width="4" height="12" rx="1"/>';
       lbl.textContent = 'Stop';
 
-      const beatMs  = (60 / preloadedBpm) * 1000;
-      const noteDur = (beatMs / 1000) * 0.88;
       const spans   = buildDisplay(raw, 'preloadedPlaybackDisplay');
 
       for (const tok of tokens) {
         if (preloadedStopFlag) break;
+        const beatMs  = (60 / preloadedBpm) * 1000;
+        const noteDur = (beatMs / 1000) * 0.88;
         spans.forEach((s, si) => {
           if (si < tok.rawIdx)        { s.classList.add('done'); s.classList.remove('current-note','current-rest'); }
           else if (si === tok.rawIdx) { s.classList.remove('done'); s.classList.add(tok.type==='note'?'current-note':'current-rest'); s.classList.remove(tok.type==='note'?'current-rest':'current-note'); }
@@ -1031,7 +1068,8 @@
     function triggerLive(digit) {
       const key = document.getElementById('piano-' + digit);
       if (key) { key.classList.add('pressed'); setTimeout(() => key.classList.remove('pressed'), 180); }
-      playNote(NOTES[digit].freq, 0.5, currentInstrument);
+      const voice = playNote(NOTES[digit].freq, sustainOn ? SUSTAIN_MAX_S : 0.5, currentInstrument);
+      if (sustainOn) sustainedVoices.push(voice);
       document.getElementById('liveStatusText').innerHTML =
         `Playing <strong>${NOTES[digit].name}${NOTES[digit].octave}</strong> &nbsp;· digit ${digit}`;
       if (recording) {
@@ -1046,6 +1084,38 @@
         renderRecording();
       }
     }
+
+    /* ─── Sustain pedal ─── */
+    function setSustain(on) {
+      if (on === sustainOn) return;
+      sustainOn = on;
+      document.getElementById('sustainPedal').classList.toggle('on', on);
+      document.getElementById('sustainLabel').textContent = on
+        ? 'Sustain on: notes ring until you let go'
+        : 'Sustain pedal: hold here or hold Space and notes ring on';
+      if (!on) releaseSustained();
+    }
+
+    function releaseSustained() {
+      if (!audioCtx) { sustainedVoices = []; return; }
+      const now = audioCtx.currentTime;
+      sustainedVoices.forEach(v => {
+        v.gain.cancelScheduledValues(now);
+        v.gain.setValueAtTime(v.gain.value, now);
+        v.gain.setTargetAtTime(0, now, 0.05);
+        setTimeout(() => v.disconnect(), 400);
+      });
+      sustainedVoices = [];
+    }
+
+    const sustainPedal = document.getElementById('sustainPedal');
+    sustainPedal.addEventListener('pointerdown', e => {
+      e.preventDefault(); sustainPedal.setPointerCapture(e.pointerId); setSustain(true);
+    });
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(type =>
+      sustainPedal.addEventListener(type, () => setSustain(false)));
+    sustainPedal.addEventListener('contextmenu', e => e.preventDefault());
+    window.addEventListener('blur', () => setSustain(false));
 
     function renderRecording() {
       const el = document.getElementById('recordedDisplay');
@@ -1084,6 +1154,7 @@
     }
 
     function sendToCompose() {
+      if (!recordedTokens.some(t => t.type === 'note')) return;
       const seq = recordedTokens.map(t => t.type === 'note' ? String(t.value) : ' ').join('');
       document.getElementById('seqInput').value = seq.trim();
       switchMode('compose');
@@ -1091,8 +1162,10 @@
 
     /* ─── Global keyboard handler ─── */
     document.addEventListener('keydown', e => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
       const inInput = ['INPUT','TEXTAREA'].includes(e.target.tagName);
       if (currentMode === 'live' && !inInput) {
+        if (e.code === 'Space') { e.preventDefault(); setSustain(true); return; }
         const digit = parseInt(e.key, 10);
         if (!isNaN(digit) && !heldKeys.has(e.code)) {
           heldKeys.add(e.code); e.preventDefault(); triggerLive(digit); return;
@@ -1110,7 +1183,10 @@
       }
     });
 
-    document.addEventListener('keyup', e => heldKeys.delete(e.code));
+    document.addEventListener('keyup', e => {
+      heldKeys.delete(e.code);
+      if (e.code === 'Space' && sustainOn) { e.preventDefault(); setSustain(false); }
+    });
   </script>
 </body>
 </html>
