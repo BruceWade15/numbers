@@ -10,4 +10,4 @@ Turn any number sequence into music. Each digit from 0 to 9 is a note. Three mod
 - To run it on your own computer, open `index.html` in a browser.
 - Hosted on GitHub Pages from this repo, so a push to the main branch updates the live site.
 
-Built by Bruce Wade, EM Solutions and M37.
+An app by M37. www.m37.co.za
